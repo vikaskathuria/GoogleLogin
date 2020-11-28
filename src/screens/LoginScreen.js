@@ -166,16 +166,18 @@ export default function LoginScreen({navigation}) {
    const _signIn = async () => {
       try {
         await GoogleSignin.hasPlayServices();
-        const { accessToken, idToken } = await GoogleSignin.signIn();
+        const { accessToken, idToken,user } = await GoogleSignin.signIn();
         setloggedIn(true);
-  
+        console.log('============useruser========================');
+        console.log(user);
+        console.log('====================================');
         const credential = firebase.auth.GoogleAuthProvider.credential(
           idToken,
           accessToken,
         );
+        const usersRef = firebase.firestore().collection('users')
         await firebase.auth().signInWithCredential(credential);
         const uid = user.uid
-        const usersRef = firebase.firestore().collection('users')
         usersRef
             .doc(uid)
             .get()
@@ -187,7 +189,7 @@ export default function LoginScreen({navigation}) {
                 }
                 const user = firestoreDocument.data()
                 console.log("usssss",user);
-                // navigation.navigate('Home', {user: user})
+                navigation.navigate('Home', {user: user})
             })
   
       } catch (error) {
