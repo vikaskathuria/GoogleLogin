@@ -1,28 +1,40 @@
 import React, { useEffect, useState } from 'react'
-import { FlatList, Keyboard, Text, TextInput, TouchableOpacity, View, StyleSheet } from 'react-native'
+import { FlatList, Keyboard, Text, TextInput, TouchableOpacity, View, StyleSheet, ActivityIndicator } from 'react-native'
 import { firebase } from '../firebase/config'
-import firebase1 from 'react-native-firebase';
 
 import {
     GoogleSigninButton,
     GoogleSignin,
     statusCodes
 } from '@react-native-community/google-signin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen(props) {
 
     const [entityText, setEntityText] = useState('')
     const [entities, setEntities] = useState([])
+    const [user, setUser] = useState({});
+    const [loader, setLoader] = useState(false);
 
     const entityRef = firebase.firestore().collection('entities')
-    const userID = props.extraData.id
+
+    // const userID = props.extraData.id
+
+    const getToken = async () => {
+
+        const jsonValue = await AsyncStorage.getItem('token')
+        let user = JSON.parse(jsonValue)
+        setUser(user)
+        getAllQuery(user.id)
+
+    }
 
     useEffect(() => {
-        getAllQuery()
+        getToken()
     }, [])
 
 
-    const getAllQuery=()=>{
+    const getAllQuery = (userID) => {
         entityRef
             .where("authorID", "==", userID)
             .orderBy('createdAt', 'desc')
@@ -40,6 +52,9 @@ export default function HomeScreen(props) {
                     console.log(error)
                 }
             )
+        setTimeout(() => {
+            setLoader(false)
+        }, 500);
 
     }
     const onAddButton = () => {
@@ -47,7 +62,7 @@ export default function HomeScreen(props) {
             const timestamp = firebase.firestore.FieldValue.serverTimestamp();
             const data = {
                 text: entityText,
-                authorID: userID,
+                authorID: user.id,
                 createdAt: timestamp,
             };
             entityRef
@@ -62,9 +77,11 @@ export default function HomeScreen(props) {
         }
 
     }
-    const onAddButtonPress =async () => {
+    const onAddButtonPress = async () => {
+        setLoader(true)
         await onAddButton()
-        getAllQuery()
+        await getAllQuery(user.id)
+
     }
 
     const renderEntity = ({ item, index }) => {
@@ -77,18 +94,22 @@ export default function HomeScreen(props) {
         )
     }
     const signOut = async () => {
-        try {
-            await GoogleSignin.revokeAccess();
-            await GoogleSignin.signOut();
-            firebase1.auth()
-                .signOut()
-                .then(() => alert('Your are signed out!'));
-            // setuserInfo([]);
-        } catch (error) {
-            console.error(error);
-        }
+        setLoader(true)
+        await GoogleSignin.revokeAccess();
+        await GoogleSignin.signOut();
+        AsyncStorage.clear()
+        props.navigation.navigate("Login")
+        setLoader(false)
+
     };
 
+    if (loader) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator color="orange" size="large" />
+            </View>
+        )
+    }
     return (
         <View style={styles.container}>
             <View style={{ flex: 8, alignItems: 'center' }}>
