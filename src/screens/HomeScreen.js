@@ -85,7 +85,8 @@ export default class App extends Component {
           <FlatList
             data={DATA}
             renderItem={({ item }) =>
-              <TouchableOpacity style={styles.itemList} onPress={()=>this.props.navigation.navigate("Detail",{item:item})}>
+              <TouchableOpacity style={styles.itemList} 
+              onPress={()=>this.props.navigation.navigate("Detail",{item:item})}>
                 <View style={{ height: hp('20%'), width: wp('100%'), }}>
                   <View>
 
@@ -147,11 +148,13 @@ export default class App extends Component {
          
 
         </View>
-        <View style={{height:40,width:40,borderRadius:40/2,backgroundColor:'#1CBBB4',justifyContent:'center',alignItems:'center',
+        <TouchableOpacity 
+        onPress={()=>this.props.navigation.navigate("Profile")}
+        style={{height:40,width:40,borderRadius:40/2,backgroundColor:'#1CBBB4',justifyContent:'center',alignItems:'center',
           position:'absolute',bottom:10,left:'45%'}}>
             <Text style={{fontSize:20,fontWeight:'bold',color:'white'}}>+</Text>
 
-          </View>
+          </TouchableOpacity>
       </View>
     );
   }
