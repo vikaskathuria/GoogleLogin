@@ -1,212 +1,191 @@
-import React, { useEffect, useState } from 'react'
-import { FlatList, Keyboard, Text, TextInput, TouchableOpacity, View, StyleSheet, ActivityIndicator } from 'react-native'
-import { firebase } from '../firebase/config'
-
-import {
-    GoogleSigninButton,
-    GoogleSignin,
-    statusCodes
-} from '@react-native-community/google-signin';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export default function HomeScreen(props) {
-
-    const [entityText, setEntityText] = useState('')
-    const [entities, setEntities] = useState([])
-    const [user, setUser] = useState({});
-    const [loader, setLoader] = useState(false);
-
-    const entityRef = firebase.firestore().collection('entities')
-
-    // const userID = props.extraData.id
-
-    const getToken = async () => {
-
-        const jsonValue = await AsyncStorage.getItem('token')
-        let user = JSON.parse(jsonValue)
-        setUser(user)
-        getAllQuery(user.id)
-
-    }
-
-    useEffect(() => {
-        getToken()
-    }, [])
 
 
-    const getAllQuery = (userID) => {
-        entityRef
-            .where("authorID", "==", userID)
-            .orderBy('createdAt', 'desc')
-            .onSnapshot(
-                querySnapshot => {
-                    const newEntities = []
-                    querySnapshot.forEach(doc => {
-                        const entity = doc.data()
-                        entity.id = doc.id
-                        newEntities.push(entity)
-                    });
-                    setEntities(newEntities)
-                },
-                error => {
-                    console.log(error)
-                }
-            )
-        setTimeout(() => {
-            setLoader(false)
-        }, 500);
 
-    }
-    const onAddButton = () => {
-        if (entityText && entityText.length > 0) {
-            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-            const data = {
-                text: entityText,
-                authorID: user.id,
-                createdAt: timestamp,
-            };
-            entityRef
-                .add(data)
-                .then(_doc => {
-                    setEntityText('')
-                    Keyboard.dismiss()
-                })
-                .catch((error) => {
-                    alert(error)
-                });
-        }
 
-    }
-    const onAddButtonPress = async () => {
-        setLoader(true)
-        await onAddButton()
-        await getAllQuery(user.id)
+import React, { Component } from 'react';
+import { View, Text, StyleSheet, FlatList,Dimensions,TouchableOpacity } from 'react-native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+const { height, width } = Dimensions.get('window');
+import { Icon } from 'react-native-elements'
+const DATA = [
+  {
+    id: '1',
+    name: 'Dr.Biresh bikram Singh',
+    title: 'Dermatologist',
+    post: 'MBBS',
+    post1: 'MBBS',
+    post2: 'DNB(General'
 
-    }
+  },
+  {
+    id: '2',
+    name: 'Dr.Anuj Sharma',
+    title: 'Gastroenterologist',
+    post: 'BAMS',
+    post1: 'DNB',
+    post2: 'MDS'
 
-    const renderEntity = ({ item, index }) => {
-        return (
-            <View style={styles.entityContainer}>
-                <Text style={styles.entityText}>
-                    {index}. {item.text}
-                </Text>
-            </View>
-        )
-    }
-    const signOut = async () => {
-        setLoader(true)
-        await GoogleSignin.revokeAccess();
-        await GoogleSignin.signOut();
-        AsyncStorage.clear()
-        props.navigation.navigate("Login")
-        setLoader(false)
+  },
+  {
+    id: '3',
+    name: 'Dr.Neha Tyagi',
+    title: 'Cardiac Electrophysiologist',
+    post: 'BPT',
+    post1: 'DDW22777',
+    post2: ''
+  },
+  {
+    id: '4',
+    name: 'Dr.Gagandeep',
+    title: '',
+    post: '',
+    post1: '',
+    post2: ''
+  },
+  {
+    id: '5',
+    name: 'Dr.Shubham Kumar',
+    title: 'Gastroenterologist',
+    post: '',
+    post1: '',
+    post2: ''
+  },
+  {
+    id: '6',
+    name: 'Dr.Shubham Kumar',
+    title: 'Gastroenterologist',
+    post: '',
+    post1: '',
+    post2: ''
+  },
+];
 
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
     };
+  }
 
-    if (loader) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator color="orange" size="large" />
-            </View>
-        )
-    }
+  render() {
     return (
-        <View style={styles.container}>
-            <View style={{ flex: 8, alignItems: 'center' }}>
-                <View style={styles.formContainer}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder='Add new entity'
-                        placeholderTextColor="#aaaaaa"
-                        onChangeText={(text) => setEntityText(text)}
-                        value={entityText}
-                        underlineColorAndroid="transparent"
-                        autoCapitalize="none"
-                    />
-                    <TouchableOpacity style={styles.button} onPress={onAddButtonPress}>
-                        <Text style={styles.buttonText}>Add</Text>
-                    </TouchableOpacity>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={{ marginLeft: '2%' }}>
+          <Icon name="arrow-left"  type="material-community" size={20}  color="#1CBBB4" />
 
-                </View>
+          </View>
+          <View style={{ marginRight: '40%' }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 16,color:'#1CBBB4' }}>My Doctor(s)</Text>
 
-                {entities && (
-                    <View style={styles.listContainer}>
-                        <FlatList
-                            data={entities}
-                            renderItem={renderEntity}
-                            keyExtractor={(item) => item.id}
-                            removeClippedSubviews={true}
-                        />
-                    </View>
-                )}
-            </View>
-            <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
-                <TouchableOpacity style={{
-                    width: "80%", height: 47,
-                    borderRadius: 5,
-                    backgroundColor: '#788eec', alignItems: 'center', justifyContent: 'center'
-                }} onPress={signOut}>
-                    <Text style={styles.buttonText}>Sign out</Text>
-                </TouchableOpacity>
-            </View>
+          </View>
 
         </View>
-    )
+        <View style={styles.flatList}>
+          <FlatList
+            data={DATA}
+            renderItem={({ item }) =>
+              <TouchableOpacity style={styles.itemList} onPress={()=>this.props.navigation.navigate("Detail",{item:item})}>
+                <View style={{ height: hp('20%'), width: wp('100%'), }}>
+                  <View>
+
+                    <View style={{ height: hp('15%'), width: wp('100%'), justifyContent: 'space-between', flexDirection: 'row', marginTop: '3%' }}>
+                      <View style={{ flexDirection: 'row' }}>
+                        <View style={{
+                          height: 55, width: 55, borderRadius: 55 / 2,  marginLeft: '2%',
+                          justifyContent: 'center', alignItems: 'center',borderWidth:1,borderColor:'#1CBBB4'
+                        }}>
+                         <Icon name='user'  type='antdesign'  color={"black"} size={height / 30}  />
+
+                        </View>
+                        <View style={{ marginLeft: '2%',height:hp('15%'),justifyContent:'space-around' }}>
+                          <Text style={{fontWeight:'bold'}}>{item.name}</Text>
+                          <Text style={{  }}>{item.title}</Text>
+                          <View style={{ flexDirection: 'row'}}>
+                            <Text style={{fontWeight:'bold'}}>{item.post}</Text>
+                            <Text style={{paddingLeft:5,fontWeight:'bold'}}>{item.post1}</Text>
+                            <Text style={{paddingLeft:5,fontWeight:'bold'}}>{item.post2}</Text>
+                          </View>
+                          <View style={{flexDirection:'row'}}>
+                          <View style={{marginLeft:5,flexDirection:'row'}}>
+                            <Icon name="message1" type="antdesign" size={20} color="grey" />
+                              <Text> 3</Text>
+                              </View>
+                            <View style={{marginLeft:5,flexDirection:'row'}}>
+                            <Icon name="call-outline" type="ionicon" size={20} color="grey" />
+                              <Text> 3</Text>
+                              </View>
+                              <View style={{marginLeft:5,flexDirection:'row'}}>
+                            <Icon name="videocam-outline" type="ionicon" size={20} color="grey" />
+                              <Text> 3</Text>
+                              </View>
+                              <View style={{marginLeft:5,flexDirection:'row'}}>
+                            <Icon name="clipboard-notes" type="foundation" size={20} color="grey" />
+                              <Text> 3</Text>
+                              </View>
+                              <View style={{marginLeft:5,flexDirection:'row'}}>
+                            <Icon name="bells" size={20} type="antdesign" size={20} color="grey"/>
+                              <Text> 3</Text>
+                              </View>
+                          </View>
+
+                        </View>
+
+                      </View>
+                      <View style={{ height: hp('5%'), width: wp('25%'), borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginRight: 10,borderColor:'#900' }}><Text style={{color:'#900'}}>Emergency</Text></View>
+
+
+                    </View>
+                  </View>
+                </View>
+
+
+
+              </TouchableOpacity>
+            }
+          />
+         
+
+        </View>
+        <View style={{height:40,width:40,borderRadius:40/2,backgroundColor:'#1CBBB4',justifyContent:'center',alignItems:'center',
+          position:'absolute',bottom:10,left:'45%'}}>
+            <Text style={{fontSize:20,fontWeight:'bold',color:'white'}}>+</Text>
+
+          </View>
+      </View>
+    );
+  }
 }
 
-
-
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    formContainer: {
-        flexDirection: 'row',
-        height: 80,
-        marginTop: 40,
-        marginBottom: 20,
-        flex: 1,
-        paddingTop: 10,
-        paddingBottom: 10,
-        paddingLeft: 30,
-        paddingRight: 30,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    input: {
-        height: 48,
-        borderRadius: 5,
-        overflow: 'hidden',
-        backgroundColor: 'white',
-        paddingLeft: 16,
-        flex: 1,
-        marginRight: 5
-    },
-    button: {
-        height: 47,
-        borderRadius: 5,
-        backgroundColor: '#788eec',
-        width: 80,
-        alignItems: "center",
-        justifyContent: 'center'
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 16
-    },
-    listContainer: {
-        marginTop: 20,
-        padding: 20,
-    },
-    entityContainer: {
-        marginTop: 16,
-        borderBottomColor: '#cccccc',
-        borderBottomWidth: 1,
-        paddingBottom: 16
-    },
-    entityText: {
-        fontSize: 20,
-        color: '#333333'
-    }
+  container: {
+    flex: 1,
+    height: hp('100%'),
+    width: wp('100%')
+  },
+  header: {
+    height: hp('8%'),
+    width: wp('100%'),
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+  },
+  flatList: {
+    height: hp('92%'),
+    width: wp('100%'),
+
+  },
+  itemList: {
+    height: hp('18%'),
+    width: wp('100%'),
+    // backgroundColor: 'blue',
+    marginTop: "0.2%",
+    borderBottomWidth: 1
+  }
+
 })
+
+
+
+

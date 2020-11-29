@@ -13,47 +13,15 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState(null)
 
-  const getToken = async () => {
-    const jsonValue = await AsyncStorage.getItem('token')
-    let user = JSON.parse(jsonValue)
-  }
 
   useEffect(() => {
 
 
-    getToken()
-    const usersRef = firebase.firestore().collection('users');
-    firebase.auth().onAuthStateChanged(user => {
-      if (user) {
-        console.log("uuuuuuuuuuuu", user);
-        setUser(user)
-
-        usersRef
-          .doc(user.uid)
-          .get()
-          .then((document) => {
-            const userData = document.data()
-            // console.log("userData",userData);
-
-            setLoading(false)
-          })
-          .catch((error) => {
-            setLoading(false)
-          });
-      } else {
-        setLoading(false)
-      }
-    });
   }, []);
 
 
   return <AppMainStack />
 }
-
-
-
-
-
 
 
 
